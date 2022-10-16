@@ -7,22 +7,44 @@ import (
 	"os"
 	"os/signal"
 
+	delivery_http "github.com/Pythonyan3/Counter/internal/delivery/http"
+	v1 "github.com/Pythonyan3/Counter/internal/delivery/http/v1"
+	"github.com/Pythonyan3/Counter/internal/repository"
+	"github.com/Pythonyan3/Counter/internal/repository/inmemory"
 	"github.com/Pythonyan3/Counter/internal/server"
+	"github.com/Pythonyan3/Counter/internal/service"
 )
+
+const name string = "Vitalii Manoilo"
 
 // Run application entrypoint.
 func Run() error {
 	var (
-		err         error
-		httpServer  *server.Server
-		httpHandler http.Handler
+		err               error
+		httpServer        *server.Server
+		mux               *http.ServeMux
+		counterService    service.CounterServiceInterface
+		counterRepository repository.CounterRepositoryInterface
+		httpHandler       delivery_http.HttpRouteInitor
 	)
 
-	// create custom http handler
-	httpHandler = http.NewServeMux()
+	// create in memory repository
+	counterRepository = inmemory.NewInMemoryRepository()
+
+	// create counter service
+	counterService = service.NewCounterService(counterRepository)
+
+	// create http mux router
+	mux = http.NewServeMux()
+
+	// create http counter handler
+	httpHandler = v1.NewHttpCounterHandler(name, counterService)
+
+	// init routes
+	httpHandler.InitRoutes(mux)
 
 	// create custom http server
-	httpServer = server.NewServer("8080", httpHandler)
+	httpServer = server.NewServer("8080", mux)
 
 	// run http server
 	go func() {
