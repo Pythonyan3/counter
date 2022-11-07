@@ -22,8 +22,17 @@ go build -o ./cmd/main ./cmd/main.go
 Using docker:
 
 ```bash
+# run only counter service
 docker build . -t counter
 docker container run -p 8000:8080 -it counter
+
+# run counter service and postgres db service
+docker-compose build
+docker-compose up
+
+# run counter service with docker swarm
+docker swarm init
+docker stack deploy -c docker-compose.yaml counter
 ```
 
 ## API Doc 📚

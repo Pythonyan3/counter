@@ -1,0 +1,27 @@
+version: '3.8'
+
+volumes:
+  db_volume:
+
+services:
+  counter-service:
+    image: pythonyan3/counter
+    build: ./
+    ports:
+      - 8000:8080
+    deploy:
+      replicas: 4
+    depends_on:
+      - counterdb
+
+  counterdb:
+    restart: always
+    image: postgres:14
+    volumes:
+      - "db_volume:/var/lib/postgresql/data"
+    environment:
+      POSTGRES_DB: counter
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - 8432:5342
