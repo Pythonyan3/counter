@@ -29,7 +29,20 @@ func (handler *HttpCounterHandler) InitRoutes(mux *http.ServeMux) error {
 
 // GetCounterValue handle root route to retrieve counter current value.
 func (handler *HttpCounterHandler) GetCounterValue(w http.ResponseWriter, r *http.Request) {
-	var response CounterResponse = CounterResponse{Counter: handler.service.Get()}
+	var (
+		err          error
+		counterValue int64
+		response     CounterResponse
+	)
+
+	counterValue, err = handler.service.Get()
+	if err != nil {
+		log.Println(fmt.Sprintf("handler.service.Get: %v", err))
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	response = CounterResponse{Counter: counterValue}
 	json.NewEncoder(w).Encode(response)
 }
 
@@ -41,10 +54,11 @@ func (handler *HttpCounterHandler) IncrementCounterValue(w http.ResponseWriter, 
 		response CounterResponse
 	)
 
-	counter, err = handler.service.Increment()
+	counter, err = handler.service.Increment(fmt.Sprintf("UserAgent: %v", r.UserAgent()))
 	if err != nil {
-		log.Printf("handler.service.Increment: %v", err)
+		log.Println(fmt.Sprintf("handler.service.Increment: %v", err))
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
 	response = CounterResponse{Counter: counter}

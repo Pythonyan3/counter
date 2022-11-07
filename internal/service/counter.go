@@ -15,11 +15,11 @@ func NewCounterService(repo repository.CounterRepositoryInterface) *CounterServi
 }
 
 // Get return counter current value.
-func (service *CounterService) Get() int64 {
+func (service *CounterService) Get() (int64, error) {
 	return service.repo.Get()
 }
 
 // Increment perform counter value increment by 1 and return new value.
-func (service *CounterService) Increment() (int64, error) {
-	return service.repo.Increment()
+func (service *CounterService) Increment(additional string) (int64, error) {
+	return service.repo.Increment(additional)
 }

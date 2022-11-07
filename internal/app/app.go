@@ -9,8 +9,7 @@ import (
 
 	delivery_http "github.com/Pythonyan3/Counter/internal/delivery/http"
 	v1 "github.com/Pythonyan3/Counter/internal/delivery/http/v1"
-	"github.com/Pythonyan3/Counter/internal/repository"
-	"github.com/Pythonyan3/Counter/internal/repository/inmemory"
+	"github.com/Pythonyan3/Counter/internal/repository/postgresql"
 	"github.com/Pythonyan3/Counter/internal/server"
 	"github.com/Pythonyan3/Counter/internal/service"
 )
@@ -24,12 +23,15 @@ func Run() error {
 		httpServer        *server.Server
 		mux               *http.ServeMux
 		counterService    service.CounterServiceInterface
-		counterRepository repository.CounterRepositoryInterface
+		counterRepository *postgresql.PostgresRepository
 		httpHandler       delivery_http.HttpRouteInitor
 	)
 
 	// create in memory repository
-	counterRepository = inmemory.NewInMemoryRepository()
+	counterRepository, err = postgresql.NewPostgresRepository()
+	if err != nil {
+		log.Fatalf("Error postgresql.NewPostgresRepository: %v", err)
+	}
 
 	// create counter service
 	counterService = service.NewCounterService(counterRepository)
@@ -63,6 +65,12 @@ func Run() error {
 	err = httpServer.Close()
 	if err != nil {
 		return fmt.Errorf("httpServer.Close: %w", err)
+	}
+
+	log.Println("Closing postgresql connection...")
+	err = counterRepository.Close()
+	if err != nil {
+		return fmt.Errorf("counterRepository.Close: %w", err)
 	}
 
 	log.Println("Server is shutted down.")
